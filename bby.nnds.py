@@ -58,7 +58,7 @@ class Config:
     API_URL = 'https://api.bigwinqaz.com/api/webapi/GetNoaverageEmerdList'
     MULTIPLIERS = [1, 2, 3, 5, 8, 15, 30, 50, 100]
     
-    WIN_STICKER = "CAACAgUAAxkBAAEQxfZpuje21ZYXoT68JntN9OemzVGbVgACQyAAAuoB0VWFUzQPpDkEyDoE"  
+    WIN_STICKER = "CAACAgUAAxkBAAEQxf1puk8hPCBuvnCFJeGZr0ngLalNfgACRxoAAv4J0FUIdG3rmswEjjoE"  
     LOSE_STICKER = "YOUR_LOSE_STICKER_ID"
 
     @staticmethod
