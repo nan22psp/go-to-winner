@@ -373,7 +373,7 @@ class AppController:
                     
                     # 1. Update Database (Async Background Task) and Memory Deque
                     doc = {"issue_number": issue, "number": number, "size": size, "timestamp": datetime.now()}
-                    asyncio.create_task(self.history.update_one({"issue_number": issue}, {"$setOnInsert": doc}, upsert=True))
+                    await self.history.update_one({"issue_number": issue}, {"$setOnInsert": doc}, upsert=True)
                     self.local_cache.append(doc)
                     
                     # 2. Check Result & Update RL Q-Table
