@@ -1,14 +1,12 @@
 """
 ====================================================================================
-🏆 ULTRA-AI AUTONOMOUS BOT (20-CORE ARCHITECTURE) - PRODUCTION EDITION 🏆
+🏆 ULTRA-AI PREDICTION SYSTEM (10-CORE ARCHITECTURE) 🏆
 ====================================================================================
-Version: 3.0.1 (Optimized for 30-Second Polling)
-Features:
-- Asyncio Offloading (Non-blocking Event Loop)
-- Memory Deque Caching (Zero DB I/O for recent history)
-- PyTorch Dynamic Quantization (INT8 CPU Optimization)
-- Interval Training (Train every 10 rounds to save 90% CPU)
-- 6+ Loss Streak Alert System for Risk Management (Admin Private DM for 7, 8, 9...)
+Developer: Master AI System
+Target: 6win566 Win Go (Regular)
+Architecture: Modular Object-Oriented Programming (OOP)
+Engines: RandomForest, GradientBoost, Markov, NGram, MonteCarlo, 
+         Trend, Bayesian, LSTM, Entropy, Meta-Optimizer.
 ====================================================================================
 """
 
@@ -16,71 +14,75 @@ import asyncio
 import time
 import os
 import logging
-from logging.handlers import RotatingFileHandler
-from collections import deque, Counter
+import math
+from collections import Counter
 from datetime import datetime
-from typing import List, Dict, Tuple, Optional
+from typing import List, Tuple, Dict, Any, Optional
 from dotenv import load_dotenv
 
+# Async Web & Database
 import aiohttp
 import motor.motor_asyncio 
+
+# Telegram UI
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
-from aiogram.exceptions import TelegramAPIError
 
+# --- 🧠 ULTRA AI & DATA SCIENCE LIBRARIES ---
 import numpy as np
 import scipy.stats as stats
+import random
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import GaussianNB
 from sklearn.preprocessing import StandardScaler
-
 import torch
 import torch.nn as nn
+import torch.optim as optim
 
 import warnings
 warnings.filterwarnings("ignore")
 
 # =========================================================================
-# [1] ⚙️ CONFIGURATION & LOGGING SETUP
+# ⚙️ MODULE 1: SYSTEM CONFIGURATION & ADVANCED LOGGING
 # =========================================================================
 load_dotenv()
 
-if not os.path.exists('logs'):
-    os.makedirs('logs')
-
+# Logger ကို စနစ်တကျ တည်ဆောက်ခြင်း
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(name)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 logger = logging.getLogger("ULTRA-AI")
-logger.setLevel(logging.INFO)
-formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-
-# Console 
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(formatter)
-logger.addHandler(console_handler)
-
-# File (Max 5MB per file, keep 3 backups)
-file_handler = RotatingFileHandler('logs/bot_system.log', maxBytes=5*1024*1024, backupCount=3)
-file_handler.setFormatter(formatter)
-logger.addHandler(file_handler)
 
 class Config:
-    BOT_TOKEN = os.getenv("BOT_TOKEN")
-    CHANNEL_ID = os.getenv("CHANNEL_ID")
-    # Admin ရဲ့ တကယ့် Telegram User ID ကို ဒီနေရာမှာ ထည့်ပါ (Private DM ပို့ရန်)
-    ADMIN_ID = os.getenv("ADMIN_ID", "8439971562") 
-    MONGO_URI = os.getenv("MONGO_URI")
-    API_URL = 'https://api.bigwinqaz.com/api/webapi/GetNoaverageEmerdList'
-    MULTIPLIERS = [1, 2, 3, 5, 8, 15, 30, 50, 100]
+    """ စနစ်တစ်ခုလုံးအတွက် လိုအပ်သော ကနဦး အချက်အလက်များ """
+    BOT_TOKEN: str = os.getenv("BOT_TOKEN", "YOUR_BOT_TOKEN")
+    CHANNEL_ID: str = os.getenv("CHANNEL_ID", "YOUR_CHANNEL_ID")
+    ADMIN_ID: str = os.getenv("ADMIN_ID", "YOUR_ADMIN_ID") # 👈 Admin ID အသစ်ထည့်ထားသည်
+    MONGO_URI: str = os.getenv("MONGO_URI", "YOUR_MONGO_URI")
     
-    WIN_STICKER = "CAACAgUAAxkBAAEQxupputyQrtjWe6a-N4-txUyUHderxQAC3xIAAqUd6VZVZKMYNf4oXzoE"  
-    LOSE_STICKER = "YOUR_LOSE_STICKER_ID"
-
+    # UI Elements
+    WIN_STICKER: str = "CAACAgUAAxkBAAEQwtVpt1_oWxyaQFmiy3O_1knZjN9yCwAC2hIAAikFkVX0qhu40v6REDoE"  
+    LOSE_STICKER: str = "" 
+    
+    # Auto Multiplier Strategy (Martingale Hybrid)
+    MULTIPLIERS: List[int] = [1, 2, 3, 5, 8, 15, 30, 50, 100]
+    
+    # API Configuration (Regular Win Go)
+    API_URL: str = 'https://api.bigwinqaz.com/api/webapi/GetNoaverageEmerdList'
+    
     @staticmethod
-    def get_headers():
+    def get_headers() -> Dict[str, str]:
+        """ API Request အတွက် Headers များကို ထုတ်ပေးသည် """
         return {
             'authority': 'api.bigwinqaz.com', 
-            'accept': 'application/json',
+            'accept': 'application/json, text/plain, */*',
+            # 💡 သတိပြုရန်: ဤနေရာတွင် Token အသစ်ကို အစားထိုးပါ
+            #'authorization': 'Bearer YOUR_TOKEN',
             'content-type': 'application/json;charset=UTF-8', 
+            'origin': 'https://www.777bigwingame.app',
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
 
@@ -88,306 +90,600 @@ bot = Bot(token=Config.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseM
 dp = Dispatcher()
 
 # =========================================================================
-# [2] 🧠 NEURAL NETWORK ARCHITECTURE (PyTorch)
+# 🗄️ MODULE 2: ASYNC DATABASE MANAGER
 # =========================================================================
-class CNN1D(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = nn.Conv1d(1, 8, kernel_size=3, padding=1)
-        self.conv2 = nn.Conv1d(8, 16, kernel_size=3, padding=1)
-        self.fc = nn.Linear(16 * 20, 1)
-        self.relu = nn.ReLU()
-        
-    def forward(self, x):
-        x = self.relu(self.conv1(x))
-        x = self.relu(self.conv2(x))
-        x = x.view(x.size(0), -1)
-        return torch.sigmoid(self.fc(x))
+class DatabaseManager:
+    """ MongoDB သို့ ချိတ်ဆက်၍ Data အဝင်အထွက်များကို စီမံသော Class """
+    
+    def __init__(self, uri: str):
+        self.client = motor.motor_asyncio.AsyncIOMotorClient(uri, serverSelectionTimeoutMS=5000)
+        self.db = self.client['bigwin4pattern_database']
+        self.history = self.db['game_history']
+        self.predictions = self.db['predictions']
 
-class LSTMPredictor(nn.Module):
+    async def initialize(self) -> None:
+        """ Database Index များကို စတင်တည်ဆောက်သည် """
+        try:
+            await self.history.create_index("issue_number", unique=True)
+            await self.predictions.create_index("issue_number", unique=True)
+            logger.info("✅ Async Database Initialized Successfully.")
+        except Exception as e:
+            logger.error(f"❌ Database Initialization Error: {e}")
+
+    async def save_history(self, issue: str, number: int, size: str, parity: str) -> None:
+        """ ပွဲစဉ်ရလဒ် အသစ်များကို သမိုင်းကြောင်းအဖြစ် သိမ်းဆည်းသည် """
+        try:
+            doc = {
+                "number": int(number),
+                "size": str(size),
+                "parity": str(parity),
+                "timestamp": datetime.now()
+            }
+            await self.history.update_one(
+                {"issue_number": issue}, 
+                {"$setOnInsert": doc}, 
+                upsert=True
+            )
+        except Exception as e:
+            logger.error(f"Save History Error: {e}")
+
+    async def save_prediction(self, issue: str, pred_size: str, confidence: float, details: Dict[str, float]) -> None:
+        """ AI ၏ ခန့်မှန်းချက်များကို နောက်ပိုင်း ပြန်လည်စစ်ဆေးရန် သိမ်းဆည်းသည် """
+        try:
+            doc = {
+                "predicted_size": str(pred_size), 
+                "confidence": float(confidence), 
+                "model_votes": details, 
+                "timestamp": datetime.now()
+            }
+            await self.predictions.update_one(
+                {"issue_number": issue},
+                {"$set": doc},
+                upsert=True
+            )
+        except Exception as e:
+            logger.error(f"Save Prediction Error: {e}")
+
+    async def update_result(self, issue: str, actual_size: str, actual_number: int, win_lose: str) -> None:
+        """ ပွဲပြီးဆုံးသွားသောအခါ ခန့်မှန်းချက် မှန်/မမှန် Update ပြုလုပ်သည် """
+        try:
+            doc = {
+                "actual_size": str(actual_size), 
+                "actual_number": int(actual_number), 
+                "win_lose": str(win_lose)
+            }
+            await self.predictions.update_one(
+                {"issue_number": issue},
+                {"$set": doc}
+            )
+        except Exception as e:
+            logger.error(f"Update Result Error: {e}")
+
+    async def get_history(self, limit: int = 500) -> List[Dict[str, Any]]:
+        """ AI သင်ယူရန်အတွက် သမိုင်းကြောင်းများကို ဆွဲထုတ်သည် """
+        try:
+            return await self.history.find().sort("issue_number", -1).limit(limit).to_list(length=limit)
+        except Exception as e:
+            logger.error(f"Get History Error: {e}")
+            return []
+
+    async def get_recent_predictions(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """ Streak တွက်ချက်ရန် နောက်ဆုံး ခန့်မှန်းချက်များကို ဆွဲထုတ်သည် """
+        try:
+            return await self.predictions.find({"win_lose": {"$ne": None}}).sort("issue_number", -1).limit(limit).to_list(length=limit)
+        except Exception as e:
+            logger.error(f"Get Predictions Error: {e}")
+            return []
+
+# =========================================================================
+# 🔬 MODULE 3: ADVANCED FEATURE ENGINEERING
+# =========================================================================
+class FeatureEngineer:
+    """ Raw Data များကို Deep Learning နှင့် ML နားလည်သော သင်္ချာကိန်းဂဏန်းများအဖြစ် ပြောင်းလဲသည် """
+    
+    def __init__(self, window_size: int = 6):
+        self.window = window_size
+        self.scaler = StandardScaler()
+
+    def extract_features(self, sizes: List[str], numbers: List[int], parities: List[str]) -> Tuple[Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray]]:
+        """ 
+        Time-Series Sequence မှ Window Size အလိုက် Features များကို ဖြတ်ထုတ်သည် 
+        Returns: (X_train_scaled, y_train, X_current_scaled)
+        """
+        if len(sizes) < self.window * 4:
+            return None, None, None
+            
+        X, y = [], []
+        try:
+            for i in range(len(sizes) - self.window):
+                row = []
+                for j in range(self.window):
+                    size_val = 1.0 if sizes[i+j] == 'BIG' else 0.0
+                    par_val = 1.0 if parities[i+j] == 'EVEN' else 0.0
+                    num_val = float(numbers[i+j])
+                    row.extend([size_val, par_val, num_val])
+                X.append(row)
+                y.append(1.0 if sizes[i+self.window] == 'BIG' else 0.0)
+            
+            curr_feats = []
+            for j in range(1, self.window + 1):
+                size_val = 1.0 if sizes[-j] == 'BIG' else 0.0
+                par_val = 1.0 if parities[-j] == 'EVEN' else 0.0
+                num_val = float(numbers[-j])
+                curr_feats.extend([size_val, par_val, num_val])
+                
+            # Standardization လုပ်ခြင်းဖြင့် AI ပိုမိုမြန်ဆန်စွာ သင်ယူနိုင်သည်
+            X_scaled = self.scaler.fit_transform(X)
+            curr_scaled = self.scaler.transform([curr_feats])
+            
+            return X_scaled, np.array(y), curr_scaled
+        except Exception as e:
+            logger.error(f"Feature Engineering Error: {e}")
+            return None, None, None
+
+# =========================================================================
+# 🧠 MODULE 4: THE 10 AI CORES (SUB-ENGINES)
+# =========================================================================
+
+class TreeEngines:
+    """ Core 1 & 2: Random Forest နှင့် Gradient Boosting """
+    def __init__(self):
+        self.rf = RandomForestClassifier(n_estimators=150, max_depth=6, random_state=42, n_jobs=-1)
+        self.gb = GradientBoostingClassifier(n_estimators=150, learning_rate=0.05, max_depth=4, random_state=42)
+        
+    def predict(self, X: np.ndarray, y: np.ndarray, curr_X: np.ndarray) -> Tuple[float, float]:
+        try:
+            self.rf.fit(X, y)
+            self.gb.fit(X, y)
+            rf_prob = float(self.rf.predict_proba(curr_X)[0][1]) if 1.0 in self.rf.classes_ else 0.5
+            gb_prob = float(self.gb.predict_proba(curr_X)[0][1]) if 1.0 in self.gb.classes_ else 0.5
+            return rf_prob, gb_prob
+        except Exception:
+            return 0.5, 0.5
+
+class MarkovEngine:
+    """ Core 3: Markov Chain State Transition Probabilities """
+    @staticmethod
+    def predict(sizes: List[str]) -> float:
+        if len(sizes) < 10: return 0.5
+        trans = {'BIG': {'BIG': 0, 'SMALL': 0}, 'SMALL': {'BIG': 0, 'SMALL': 0}}
+        try:
+            for i in range(len(sizes)-1): 
+                trans[sizes[i]][sizes[i+1]] += 1
+            curr = sizes[-1]
+            tot = sum(trans[curr].values())
+            return float(trans[curr]['BIG'] / tot) if tot > 0 else 0.5
+        except: return 0.5
+
+class NGramEngine:
+    """ Core 4: Sequential Pattern Matching (N-Grams) """
+    @staticmethod
+    def predict(sizes: List[str], n: int = 4) -> float:
+        if len(sizes) < n+1: return 0.5
+        try:
+            pat = tuple(sizes[-n:])
+            matches = [sizes[i+n] for i in range(len(sizes)-n) if tuple(sizes[i:i+n]) == pat]
+            if not matches: return 0.5
+            return float(matches.count('BIG') / len(matches))
+        except: return 0.5
+
+class MonteCarloEngine:
+    """ Core 5: Monte Carlo Random Walk Simulations """
+    @staticmethod
+    def predict(sizes: List[str], sims: int = 1000) -> float:
+        if not sizes: return 0.5
+        try:
+            prob_b = sizes.count('BIG') / len(sizes)
+            results = np.random.choice([1.0, 0.0], size=sims, p=[prob_b, 1.0-prob_b])
+            return float(np.mean(results))
+        except: return 0.5
+
+class TrendEngine:
+    """ Core 6: Market Trend & Momentum Analyzer """
+    @staticmethod
+    def predict(sizes: List[str], window: int = 15) -> float:
+        if len(sizes) < window: return 0.5
+        try:
+            recent = sizes[-window:]
+            momentum = recent.count('BIG') / float(window)
+            # Mean Reversion Logic (Overbought/Oversold)
+            if momentum >= 0.8: return 0.25 
+            if momentum <= 0.2: return 0.75 
+            return float(momentum)
+        except: return 0.5
+
+class BayesianEngine:
+    """ Core 7: Naive Bayes Probability Network """
+    def __init__(self): 
+        self.nb = GaussianNB()
+        
+    def predict(self, X: np.ndarray, y: np.ndarray, curr_X: np.ndarray) -> float:
+        try:
+            self.nb.fit(X, y)
+            return float(self.nb.predict_proba(curr_X)[0][1]) if 1.0 in self.nb.classes_ else 0.5
+        except: return 0.5
+
+class SimpleLSTM(nn.Module):
+    """ PyTorch Neural Network Structure """
     def __init__(self):
         super().__init__()
-        self.lstm = nn.LSTM(1, 32, num_layers=2, batch_first=True, dropout=0.2)
-        self.fc = nn.Linear(32, 1)
+        self.lstm = nn.LSTM(input_size=1, hidden_size=16, num_layers=1, batch_first=True)
+        self.fc = nn.Linear(16, 1)
+        self.sigmoid = nn.Sigmoid()
         
     def forward(self, x):
         _, (hn, _) = self.lstm(x)
-        return torch.sigmoid(self.fc(hn[-1]))
+        out = self.fc(hn[-1])
+        return self.sigmoid(out)
 
-# =========================================================================
-# [3] 🚀 ENGINES (Optimized for 30s Polling & CPU Efficiency)
-# =========================================================================
-class DeepLearningGroup:
-    def __init__(self):
-        self.lstm_model = LSTMPredictor()
-        self.cnn_model = CNN1D()
-        self.q_table = {} 
-        
-        self._load_weights()
-        self._optimize_models()
-
-    def _load_weights(self):
+class LSTMEngine:
+    """ Core 8: Long Short-Term Memory Deep Learning """
+    def predict(self, sizes: List[str]) -> float:
+        if len(sizes) < 50: return 0.5
         try:
-            if os.path.exists('lstm_weights.pth'):
-                self.lstm_model.load_state_dict(torch.load('lstm_weights.pth', map_location='cpu', weights_only=True))
-            if os.path.exists('cnn_weights.pth'):
-                self.cnn_model.load_state_dict(torch.load('cnn_weights.pth', map_location='cpu', weights_only=True))
-            logger.info("✅ PyTorch Offline Weights Loaded Successfully.")
-        except Exception as e:
-            logger.error(f"Failed to load PyTorch Weights: {e}")
-
-    def _optimize_models(self):
-        self.lstm_model = torch.quantization.quantize_dynamic(self.lstm_model, {nn.LSTM, nn.Linear}, dtype=torch.qint8)
-        self.cnn_model = torch.quantization.quantize_dynamic(self.cnn_model, {nn.Linear}, dtype=torch.qint8)
-        self.lstm_model.eval()
-        self.cnn_model.eval()
-
-    def predict(self, sizes: List[str], default_b: float) -> Dict[str, float]:
-        res = {"lstm": default_b, "cnn": default_b, "rl_engine": default_b}
-        if len(sizes) < 21: return res
-        
-        try:
-            data = [1.0 if s == 'BIG' else 0.0 for s in sizes[-21:]]
-            with torch.no_grad():
-                seq_lstm = torch.tensor(data[:-1], dtype=torch.float32).view(1, 20, 1)
-                res["lstm"] = float(self.lstm_model(seq_lstm).item())
-                
-                seq_cnn = torch.tensor(data[:-1], dtype=torch.float32).view(1, 1, 20)
-                res["cnn"] = float(self.cnn_model(seq_cnn).item())
-                
-            state = tuple(sizes[-3:])
-            res["rl_engine"] = self.q_table.get(state, default_b)
+            # Prepare Sequence
+            data = [1.0 if s == 'BIG' else 0.0 for s in sizes[-50:]]
+            X_t = torch.tensor(data[:-1], dtype=torch.float32).view(1, -1, 1)
+            y_t = torch.tensor([data[-1]], dtype=torch.float32).view(1, 1)
+            
+            # Fast Online Training
+            model = SimpleLSTM()
+            optimizer = optim.Adam(model.parameters(), lr=0.01)
+            criterion = nn.BCELoss()
+            
+            model.train()
+            for _ in range(5): # 5 Epochs for real-time speed
+                optimizer.zero_grad()
+                loss = criterion(model(X_t), y_t)
+                loss.backward()
+                optimizer.step()
+            
+            # Predict Next
+            model.eval()
+            curr_X = torch.tensor(data[1:], dtype=torch.float32).view(1, -1, 1)
+            with torch.no_grad(): 
+                prediction = model(curr_X).item()
+            return float(prediction)
         except Exception as e: 
-            logger.debug(f"DL Predict Error: {e}")
-        return res
+            logger.warning(f"LSTM Error: {e}")
+            return 0.5
 
-class MachineLearningGroup:
-    def __init__(self, train_interval=10):
-        self.models = {
-            "rf": RandomForestClassifier(n_estimators=50, max_depth=3, n_jobs=-1),
-            "logistic": LogisticRegression(max_iter=100)
+class EntropyEngine:
+    """ Core 9: Shannon Entropy (Chaos & Volatility) Measurement """
+    @staticmethod
+    def predict(sizes: List[str]) -> float:
+        if len(sizes) < 20: return 0.5
+        try:
+            recent = sizes[-20:]
+            p_b = recent.count('BIG') / 20.0
+            p_s = 1.0 - p_b
+            if p_b == 0 or p_s == 0: return float(p_b)
+            
+            entropy = stats.entropy([p_b, p_s], base=2)
+            # If entropy is extremely high (>0.98), market is chaotic. Default to 0.5
+            if entropy > 0.98: return 0.5 
+            return float(p_b)
+        except: return 0.5
+
+class MetaOptimizer:
+    """ Core 10: Dynamic Weight Adjustment (Self-Learning Hub) """
+    def __init__(self):
+        self.weights: Dict[str, float] = {
+            'rf': 0.15, 'gb': 0.15, 'markov': 0.10, 'ngram': 0.10,
+            'monte': 0.05, 'trend': 0.10, 'bayes': 0.10, 'lstm': 0.15, 'entropy': 0.10
         }
-        self.train_interval = train_interval
-        self.predict_count = 0
-        self.is_trained = False
 
-    def predict(self, X: np.ndarray, y: np.ndarray, curr_X: np.ndarray, default_b: float) -> Dict[str, float]:
-        res = {k: default_b for k in self.models.keys()}
-        if X is None or len(X) < 20: return res
-        
-        if not self.is_trained or self.predict_count % self.train_interval == 0:
-            for name, model in self.models.items():
-                try: model.fit(X, y)
-                except: pass
-            self.is_trained = True
-            logger.info(f"🔄 ML Models Batch Trained (Round: {self.predict_count})")
+    def update(self, actual: str, past_preds: Dict[str, float]) -> None:
+        if not past_preds: return
+        try:
+            actual_val = 1.0 if actual == 'BIG' else 0.0
+            total_w = 0.0
             
-        self.predict_count += 1
-
-        for name, model in self.models.items():
-            try: res[name] = float(model.predict_proba(curr_X)[0][1]) if 1.0 in model.classes_ else default_b
-            except: pass
-        return res
-
-class StatisticalGroup:
-    def predict(self, sizes: List[str], default_b: float) -> Dict[str, float]:
-        res = {"markov": default_b, "monte_carlo": default_b}
-        if len(sizes) > 10:
-            trans = {'BIG': {'BIG': 0, 'SMALL': 0}, 'SMALL': {'BIG': 0, 'SMALL': 0}}
-            for i in range(len(sizes)-1): trans[sizes[i]][sizes[i+1]] += 1
-            curr = sizes[-1]
-            tot = sum(trans[curr].values())
-            res["markov"] = float(trans[curr]['BIG']/tot) if tot > 0 else default_b
-            
-            prob_b = sizes.count('BIG') / len(sizes)
-            res["monte_carlo"] = float(np.mean(np.random.choice([1.0, 0.0], size=500, p=[prob_b, 1.0-prob_b])))
-        return res
+            for model, prob in past_preds.items():
+                error = abs(actual_val - prob)
+                # Reward accuracy, penalize error
+                if error < 0.4: 
+                    self.weights[model] += 0.05
+                else: 
+                    self.weights[model] = max(0.01, self.weights[model] - 0.02)
+                total_w += self.weights[model]
+                
+            # Normalize
+            if total_w > 0:
+                for k in self.weights: 
+                    self.weights[k] = float(self.weights[k] / total_w)
+        except Exception as e:
+            logger.error(f"Meta Optimizer Error: {e}")
 
 # =========================================================================
-# [4] 🧠 20-CORE CONTROLLER (Meta-AI & Risk Management)
+# ⚙️ MODULE 5: MASTER ORCHESTRATOR
 # =========================================================================
-class AutonomousBot:
+class UltraMasterEngine:
+    """ 10-Core System အားလုံးကို တစ်နေရာတည်းမှ ပေါင်းစပ်ထိန်းချုပ်သော အင်ဂျင်ကြီး """
+    
     def __init__(self):
-        self.dl = DeepLearningGroup()
-        self.ml = MachineLearningGroup(train_interval=10)
-        self.stat = StatisticalGroup()
-        self.scaler = StandardScaler()
-        
-        self.meta_weights = {"ml": 0.35, "dl": 0.50, "stat": 0.15}
-        self.last_state = ()
+        self.fe = FeatureEngineer()
+        self.opt = MetaOptimizer()
+        self.trees = TreeEngines()
+        self.bayes = BayesianEngine()
+        self.lstm = LSTMEngine()
+        self.last_probs: Dict[str, float] = {}
 
-    def analyze(self, docs: List[dict], streak: int) -> dict:
-        if len(docs) < 30: 
-            return {"pred": "SKIP", "conf": 0, "step": 0, "engines": 0}
+    def analyze(self, docs: List[Dict[str, Any]]) -> Tuple[str, float, Dict[str, float]]:
+        """ ဒေတာများကို သရုပ်ခွဲ၍ နောက်ဆုံးခန့်မှန်းချက်ကို ထုတ်ပေးသည် """
+        if len(docs) < 50: 
+            return random.choice(["BIG", "SMALL"]), random.uniform(50.1, 54.9), {}
         
-        sizes = [d.get('size', 'BIG') for d in docs]
-        default_b = sizes.count('BIG') / len(sizes) if sizes else 0.5
-
-        window = 8
-        X, y = [], []
-        if len(sizes) > window + 1:
-            for i in range(len(sizes) - window - 1):
-                X.append([1.0 if s == 'BIG' else 0.0 for s in sizes[i:i+window]])
-                y.append(1.0 if sizes[i+window] == 'BIG' else 0.0)
+        try:
+            sizes = [d.get('size', 'BIG') for d in reversed(docs)]
+            nums = [int(d.get('number', 0)) for d in reversed(docs)]
+            pars = [d.get('parity', 'EVEN') for d in reversed(docs)]
             
-            curr_X = [[1.0 if s == 'BIG' else 0.0 for s in sizes[-window:]]]
-            try:
-                X = self.scaler.fit_transform(np.array(X))
-                curr_X = self.scaler.transform(np.array(curr_X))
-            except: curr_X = None
-        else: curr_X = None
+            # Market Baseline ရှာခြင်း
+            baseline_b = sizes.count('BIG') / len(sizes)
+            if baseline_b == 0 or baseline_b == 1:
+                baseline_b = 0.5 
 
-        ml_preds = self.ml.predict(X, np.array(y), curr_X, default_b)
-        dl_preds = self.dl.predict(sizes, default_b)
-        stat_preds = self.stat.predict(sizes, default_b)
-        
-        dl_avg = np.mean(list(dl_preds.values()))
-        ml_avg = np.mean(list(ml_preds.values()))
-        stat_avg = np.mean(list(stat_preds.values()))
-        
-        final_prob = (dl_avg * self.meta_weights["dl"]) + (ml_avg * self.meta_weights["ml"]) + (stat_avg * self.meta_weights["stat"])
-        
-        pred_size = "BIG" if final_prob > 0.5 else "SMALL"
-        step = streak + 1 if streak < len(Config.MULTIPLIERS) else 1 
-        conf = max(final_prob, 1 - final_prob) * 100
-
-        self.last_state = tuple(sizes[-3:])
-        return {"pred": pred_size, "conf": round(conf, 1), "step": step, "engines": 20}
+            X, y, curr_X = self.fe.extract_features(sizes, nums, pars)
+            
+            probs = {}
+            probs['markov'] = MarkovEngine.predict(sizes)
+            probs['ngram'] = NGramEngine.predict(sizes)
+            probs['monte'] = MonteCarloEngine.predict(sizes)
+            probs['trend'] = TrendEngine.predict(sizes)
+            probs['entropy'] = EntropyEngine.predict(sizes)
+            probs['lstm'] = self.lstm.predict(sizes)
+            
+            if X is not None and len(X) > 10:
+                probs['rf'], probs['gb'] = self.trees.predict(X, y, curr_X)
+                probs['bayes'] = self.bayes.predict(X, y, curr_X)
+            else:
+                probs['rf'] = probs['gb'] = probs['bayes'] = baseline_b
+                
+            self.last_probs = {k: float(v) for k, v in probs.items()}
+            
+            w = self.opt.weights
+            final_b = sum(probs[k] * w.get(k, 0.1) for k in probs)
+            
+            # Baseline ဖြင့် နှိုင်းယှဉ်ခြင်း (BIG ငြိခြင်းကို ကာကွယ်ရန်)
+            if final_b > baseline_b:
+                final_pred = "BIG"
+            elif final_b < baseline_b:
+                final_pred = "SMALL"
+            else:
+                final_pred = random.choice(["BIG", "SMALL"])
+            
+            # Confidence Calculation
+            deviation = abs(final_b - baseline_b)
+            raw_conf = 0.5 + (deviation * 2.5)
+            conf = min(max(float(raw_conf) * 100, 51.0), 99.0)
+            
+            return final_pred, round(conf, 1), self.last_probs
+            
+        except Exception as e:
+            logger.error(f"Master Engine Error: {e}")
+            return random.choice(["BIG", "SMALL"]), 50.0, {}
 
 # =========================================================================
-# [5] 🏆 TELEGRAM APP & ASYNC LOOP (30-Seconds Optimized)
+# 💰 MODULE 6: TELEGRAM UI & PRESENTATION
 # =========================================================================
-class AppController:
+class UIManager:
+    """ Telegram သို့ လှပသော စာသားများ၊ စတစ်ကာများ ပို့ဆောင်ခြင်းကို စီမံသည် """
+    def __init__(self, bot_client: Bot):
+        self.bot = bot_client
+
+    async def broadcast_prediction(self, issue: str, pred: str, step: int, conf: float, top_engine: str) -> None:
+        msg = (
+            f"<b>[ULTRA-AI 10-CORE PRO]</b>\n"
+            f"⏰ Period: <code>{issue}</code>\n"
+            f"🎯 Prediction: <b>{pred}</b> {step}x\n"
+            f"📊 Confidence: {conf}%\n"
+            f"🧠 Top Engine: <code>{top_engine.upper()}</code>"
+        )
+        try: 
+            await self.bot.send_message(chat_id=Config.CHANNEL_ID, text=msg)
+        except Exception as e: 
+            logger.error(f"UI Predict Send Error: {e}")
+
+    async def broadcast_result(self, issue: str, pred: str, step: int, is_win: bool, actual_size: str, actual_num: int) -> None:
+        win_str = "WIN ✅" if is_win else "LOSE ❌"
+        icon = "🟢" if is_win else "🔴"
+        res_letter = "B" if actual_size == "BIG" else "S"
+        
+        msg = (
+            f"<b>🏆 SIX-LOTTERY RESULTS</b>\n\n"
+            f"⏰ Period: <code>{issue}</code>\n"
+            f"🎯 Choice: {pred} {step}x\n"
+            f"📊 Result: {icon} <b>{win_str}</b> | {res_letter} ({actual_num})"
+        )
+        try: 
+            await self.bot.send_message(chat_id=Config.CHANNEL_ID, text=msg)
+            
+            if is_win and Config.WIN_STICKER:
+                await self.bot.send_sticker(chat_id=Config.CHANNEL_ID, sticker=Config.WIN_STICKER)
+            elif not is_win and Config.LOSE_STICKER:
+                await self.bot.send_sticker(chat_id=Config.CHANNEL_ID, sticker=Config.LOSE_STICKER)
+        except Exception as e: 
+            logger.error(f"UI Result Send Error: {e}")
+
+    # 👈 သတိပေး Alert ပို့မည့် Function အသစ်
+    async def alert_lose_streak(self, streak: int) -> None:
+        """ ၆ ပွဲနှင့်အထက် ဆက်တိုက်ရှုံးပါက Admin သို့ သတိပေးရန် """
+        if not Config.ADMIN_ID or Config.ADMIN_ID == "YOUR_ADMIN_ID":
+            logger.warning("Admin ID မထည့်ထားသဖြင့် Alert မပို့နိုင်ပါ။")
+            return
+            
+        msg = (
+            f"⚠️ <b>WARNING: HIGH LOSE STREAK</b> ⚠️\n\n"
+            f"🚨 စနစ်သည် ယခု <b>{streak} ပွဲဆက်တိုက်</b> ရှုံးနေပါပြီ။\n"
+            f"ခေတ္တရပ်နားရန် သို့မဟုတ် AI ကို ပြန်လည်စစ်ဆေးရန် အကြံပြုပါသည်။"
+        )
+        try: 
+            await self.bot.send_message(chat_id=Config.ADMIN_ID, text=msg)
+        except Exception as e: 
+            logger.error(f"UI Alert Send Error: {e}")
+
+# =========================================================================
+# 🚀 MODULE 7: THE MAIN CONTROLLER LOOP
+# =========================================================================
+class ApplicationController:
+    """ API မှ Data ဆွဲခြင်း၊ Database သိမ်းခြင်း၊ AI တွက်ခြင်းတို့ကို အချိန်ကိုက် လုပ်ဆောင်သည် """
     def __init__(self):
-        self.client = motor.motor_asyncio.AsyncIOMotorClient(Config.MONGO_URI)
-        self.db = self.client['ultra20core_db']
-        self.history = self.db['game_history']
-        
-        self.bot_ai = AutonomousBot()
-        self.last_issue = None
-        self.lose_streak = 0  
-        self.local_cache = deque(maxlen=500) 
-        
-    async def init_db_cache(self):
-        logger.info("📦 Preloading Data to Memory Cache...")
-        await self.history.create_index("issue_number", unique=True)
-        docs = await self.history.find().sort("issue_number", -1).limit(500).to_list(length=500)
-        for d in reversed(docs): self.local_cache.append(d)
-        logger.info(f"✅ Loaded {len(self.local_cache)} records to Memory.")
+        self.db = DatabaseManager(Config.MONGO_URI)
+        self.ai = UltraMasterEngine()
+        self.ui = UIManager(bot)
+        self.last_issue: Optional[str] = None
+        self.lose_streak: int = 0
 
-    async def fetch_api(self, session: aiohttp.ClientSession) -> Optional[dict]:
+    async def fetch_api_data(self, session: aiohttp.ClientSession) -> Optional[Dict[str, Any]]:
+        """ ဆာဗာမှ ပွဲစဉ်ရလဒ်များကို လှမ်းတောင်းသည် (Retry စနစ်ပါဝင်သည်) """
         json_data = {
             'pageSize': 10, 'pageNo': 1, 'typeId': 30, 'language': 7, 
             'random': '9ef85244056948ba8dcae7aee7758bf4', 
             'signature': '2EDB8C2B5264F62EC53116916A9EC05C', 
             'timestamp': int(time.time())
         }
-        try:
-            async with session.post(Config.API_URL, headers=Config.get_headers(), json=json_data, timeout=3) as r:
-                if r.status == 200: return await r.json()
-        except asyncio.TimeoutError: logger.warning("⚠️ API Fetch Timeout.")
-        except Exception as e: logger.debug(f"API Error: {e}")
+        for attempt in range(3):
+            try:
+                async with session.post(Config.API_URL, headers=Config.get_headers(), json=json_data, timeout=5.0) as r:
+                    if r.status == 200: 
+                        res = await r.json()
+                        if res.get('code') != 0:
+                            logger.error(f"API Rejected (Code: {res.get('code')}): Update Token/Signature!")
+                        return res
+                    else:
+                        logger.error(f"HTTP Status Error: {r.status}")
+            except Exception as e:
+                logger.warning(f"API Fetch Retry {attempt+1}/3 failed: {e}")
+                await asyncio.sleep(0.5)
         return None
 
-    async def send_prediction(self, issue: str, data: dict):
-        if data["pred"] == "SKIP": return
-        msg = f"<b>☘️ 𝐔𝐋𝐓𝐑𝐀-𝐀𝐈 𝟐𝟎-𝐂𝐎𝐑𝐄 ☘️</b>\n⏰ Pᴇʀɪᴏᴅ: <code>{issue}</code>\n🎯 Cʜᴏɪᴄᴇ: <b>{data['pred']}</b> {data['step']}x\n📊 Cᴏɴғɪᴅᴇɴᴄᴇ: {data['conf']}%"
-        try: await bot.send_message(chat_id=Config.CHANNEL_ID, text=msg)
-        except TelegramAPIError as e: logger.error(f"TG Send Error: {e}")
-
-    async def handle_result(self, issue: str, pred_size: str, size: str, number: int):
-        is_win = (pred_size == size)
-        win_str, icon = ("WIN", "🟢") if is_win else ("LOSE", "🔴")
-        msg = f"<b>🏆 20-CORE RESULTS</b>\n⏰ Period: <code>{issue}</code>\n📊 Result: {icon} <b>{win_str}</b> | {size[0]} ({number})"
+    async def run_forever(self) -> None:
+        """ စက်ခေါင်းကြီးကို အဆုံးမရှိ (Infinite Loop) မောင်းနှင်သည် """
+        await self.db.initialize()
         
-        try:
-            # Channel ကို Result ပို့ခြင်း
-            await bot.send_message(chat_id=Config.CHANNEL_ID, text=msg)
-            
-            if is_win:
-                self.lose_streak = 0
-                if Config.WIN_STICKER: await bot.send_sticker(chat_id=Config.CHANNEL_ID, sticker=Config.WIN_STICKER)
-            else:
-                self.lose_streak += 1
-                if Config.LOSE_STICKER: await bot.send_sticker(chat_id=Config.CHANNEL_ID, sticker=Config.LOSE_STICKER)
-
-                # 🚨 6+ LOSS ADMIN ALERT SYSTEM (Private DM) 🚨
-                if self.lose_streak > 6 and Config.ADMIN_ID:
-                    # Multiplier ကို လက်ရှိရှုံးပွဲရေနဲ့ ချိန်ကိုက်ပြသရန် (စာရင်းထဲက ကျော်မသွားအောင် min() သုံးထားပါသည်)
-                    multiplier_idx = min(self.lose_streak - 1, len(Config.MULTIPLIERS) - 1)
-                    current_multiplier = Config.MULTIPLIERS[multiplier_idx]
-                    
-                    alert_msg = (
-                        "⚠️ <b>URGENT RISK ALERT</b> ⚠️\n"
-                        f"Bot သည် ({self.lose_streak}) ပွဲဆက်တိုက် ရှုံးနေပါသည်။\n"
-                        f"Multiplier: {current_multiplier}x\n"
-                        "ကျေးဇူးပြု၍ စောင့်ကြည့်ထိန်းချုပ်ပါ။"
-                    )
-                    # Admin ရဲ့ Private Chat ထဲကို တိုက်ရိုက်ပို့မယ့်အပိုင်း
-                    await bot.send_message(chat_id=Config.ADMIN_ID, text=alert_msg)
-                    logger.warning(f"🚨 Sent {self.lose_streak}-Loss Alert to Admin Private DM ({Config.ADMIN_ID})!")
-                    
-        except TelegramAPIError as e: 
-            logger.error(f"TG Result Error (or Admin DM blocked): {e}")
-
-    async def run_forever(self):
-        await self.init_db_cache()
-        connector = aiohttp.TCPConnector(limit=10)
-        
-        async with aiohttp.ClientSession(connector=connector) as session:
-            logger.info("🔥 ULTRA-AI 20-CORE LOOP STARTED (30 SECONDS MODE) 🔥")
-            next_prediction = None
-            
+        async with aiohttp.ClientSession() as session:
+            logger.info("🔥 ULTRA-AI 10-CORE GAME LOOP STARTED SUCCESSFULLY 🔥")
             while True:
-                data = await self.fetch_api(session)
-                if not data or data.get('code') != 0: 
-                    await asyncio.sleep(1)
-                    continue
+                try:
+                    data = await self.fetch_api_data(session)
+                    if not data or data.get('code') != 0:
+                        await asyncio.sleep(1.5); continue
+                        
+                    records = data.get("data", {}).get("list", [])
+                    if not records: continue
+                    
+                    latest = records[0]
+                    issue = str(latest["issueNumber"])
+                    number = int(latest["number"])
+                    size = "BIG" if number >= 5 else "SMALL"
+                    parity = "EVEN" if number % 2 == 0 else "ODD"
+                    
+                    # 1️⃣ စတင်ဖွင့်ချိန် (Initialization State)
+                    if not self.last_issue:
+                        logger.info(f"🔄 Initializing State at Issue: {issue}")
+                        self.last_issue = issue
+                        
+                        recent_preds = await self.db.get_recent_predictions(15)
+                        self.lose_streak = 0
+                        for p in recent_preds:
+                            if p.get("win_lose") == "LOSE": self.lose_streak += 1
+                            else: break
+                        if self.lose_streak >= len(Config.MULTIPLIERS): self.lose_streak = 0
+
+                        next_issue = str(int(issue) + 1)
+                        docs = await self.db.get_history(500)
+                        
+                        pred, conf, details = self.ai.analyze(docs)
+                        top_model = max(self.ai.opt.weights, key=self.ai.opt.weights.get) if self.ai.opt.weights else "rf"
+                        
+                        await self.ui.broadcast_prediction(next_issue, pred, self.lose_streak + 1, conf, top_model)
+                        await asyncio.sleep(1.0); continue
+
+                    # 2️⃣ ပွဲစဉ်အသစ် ထွက်လာသောအခါ (New Issue State)
+                    if int(issue) > int(self.last_issue):
+                        logger.info(f"🟢 New Result Arrived: {issue} -> {size} ({number})")
+                        
+                        # History သိမ်းမည်
+                        await self.db.save_history(issue, number, size, parity)
+                        
+                        # AI Optimizer ကို သင်ယူခိုင်းမည် (Self-Learning)
+                        self.ai.opt.update(size, self.ai.last_probs)
+                        
+                        # ယခင် Prediction ကို ရှာ၍ ရလဒ်တိုက်စစ်မည်
+                        pred_doc = await self.db.predictions.find_one({"issue_number": issue})
+                        
+                        if pred_doc and pred_doc.get('predicted_size'):
+                            predicted_size = str(pred_doc['predicted_size'])
+                            is_win = (predicted_size == size)
+                            win_lose_db = "WIN" if is_win else "LOSE"
+                            
+                            # DB တွင် ရလဒ် Update လုပ်မည်
+                            await self.db.update_result(issue, size, number, win_lose_db)
+                            
+                            # Telegram သို့ Result ပို့မည်
+                            current_step = self.lose_streak + 1
+                            await self.ui.broadcast_result(issue, predicted_size, current_step, is_win, size, number)
+                            
+                            # Streak ကို Update လုပ်မည်
+                            if is_win: 
+                                self.lose_streak = 0
+                            else: 
+                                self.lose_streak += 1
+                                
+                                # 👈 ၆ ပွဲနှင့်အထက် ရှုံးပါက Admin ထံ Alert ပို့မည့် စနစ်
+                                if self.lose_streak >= 6:
+                                    await self.ui.alert_lose_streak(self.lose_streak)
+                                
+                                if self.lose_streak >= len(Config.MULTIPLIERS): 
+                                    self.lose_streak = 0
+
+                        self.last_issue = issue
+                        
+                        # 3️⃣ နောက်ပွဲစဉ်အတွက် ချက်ချင်း ခန့်မှန်းမည် (Prediction State)
+                        next_issue = str(int(issue) + 1)
+                        docs = await self.db.get_history(500)
+                        
+                        logger.info(f"⏳ Analyzing probabilities for {next_issue}...")
+                        pred, conf, details = self.ai.analyze(docs)
+                        
+                        # DB သို့ Prediction အသစ် သိမ်းမည်
+                        await self.db.save_prediction(next_issue, pred, conf, details)
+                        
+                        top_model = max(self.ai.opt.weights, key=self.ai.opt.weights.get)
+                        current_step = self.lose_streak + 1
+                        
+                        # Telegram သို့ Prediction ပို့မည်
+                        await self.ui.broadcast_prediction(next_issue, pred, current_step, conf, top_model)
+
+                except Exception as e:
+                    logger.error(f"Critical Loop Exception: {e}")
                 
-                latest = data["data"]["list"][0]
-                issue, number = str(latest["issueNumber"]), int(latest["number"])
-                size = "BIG" if number >= 5 else "SMALL"
-                
-                if not self.last_issue:
-                    self.last_issue = issue
-                    continue
+                # Server ဝန်မပိစေရန် 1.5s နားမည်
+                await asyncio.sleep(1.5)
 
-                if int(issue) > int(self.last_issue):
-                    logger.info(f"🟢 Result: {issue} -> {size} ({number})")
-                    
-                    doc = {"issue_number": issue, "number": number, "size": size, "timestamp": datetime.now()}
-                    await self.history.update_one({"issue_number": issue}, {"$setOnInsert": doc}, upsert=True)
-                    self.local_cache.append(doc)
-                    
-                    if next_prediction:
-                        await self.handle_result(issue, next_prediction["pred"], size, number)
-                        old_q = self.bot_ai.dl.q_table.get(self.bot_ai.last_state, 0.5)
-                        reward = 1.0 if next_prediction["pred"] == size else 0.0
-                        self.bot_ai.dl.q_table[self.bot_ai.last_state] = old_q + 0.1 * (reward - old_q)
-
-                    self.last_issue = issue
-                    next_issue = str(int(issue) + 1)
-                    
-                    logger.debug("🧠 Starting Deep AI Analysis in Thread...")
-                    next_prediction = await asyncio.to_thread(self.bot_ai.analyze, list(self.local_cache), self.lose_streak)
-                    
-                    await self.send_prediction(next_issue, next_prediction)
-                    logger.debug("⏱️ Sleeping for 15 seconds to save bandwidth...")
-                    await asyncio.sleep(10)
-                else:
-                    await asyncio.sleep(1)
-
-async def main():
-    logger.info("Starting Telegram Bot Polling...")
+# =========================================================================
+# 🚀 MODULE 8: ENTRY POINT
+# =========================================================================
+async def main() -> None:
+    """ Python Program စတင်အလုပ်လုပ်သော နေရာ """
+    logger.info("Initializing ULTRA-AI Core Components...")
+    
+    # Webhook အဟောင်းများရှိပါက ရှင်းလင်းသည်
     await bot.delete_webhook(drop_pending_updates=True)
-    app = AppController()
-    asyncio.create_task(app.run_forever())
+    
+    app_controller = ApplicationController()
+    
+    # Game Loop ကို Background တွင် အလုပ်လုပ်စေသည်
+    asyncio.create_task(app_controller.run_forever())
+    
+    logger.info("Bot is now Polling Telegram Updates...")
+    # Telegram Bot ကို စတင်အလုပ်လုပ်စေသည်
     await dp.start_polling(bot)
 
 if __name__ == '__main__':
     try: 
+        # Async Event Loop ဖြင့် Main Function ကို မောင်းနှင်သည်
         asyncio.run(main())
     except KeyboardInterrupt: 
-        logger.info("🛑 System Shut Down by Admin.")
-    except Exception as e:
-        logger.critical(f"🔥 Critical System Failure: {e}")
+        logger.info("System Shut Down by User (Ctrl+C).")
