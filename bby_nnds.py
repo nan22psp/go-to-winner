@@ -60,11 +60,11 @@ class Config:
     """ စနစ်တစ်ခုလုံးအတွက် လိုအပ်သော ကနဦး အချက်အလက်များ """
     BOT_TOKEN: str = os.getenv("BOT_TOKEN", "YOUR_BOT_TOKEN")
     CHANNEL_ID: str = os.getenv("CHANNEL_ID", "YOUR_CHANNEL_ID")
-    ADMIN_ID: str = os.getenv("ADMIN_ID", "YOUR_ADMIN_ID") # 👈 Admin ID အသစ်ထည့်ထားသည်
+    ADMIN_ID: str = os.getenv("ADMIN_ID", "YOUR_ADMIN_ID") # 👈 Alert ပို့ရန် Admin ID
     MONGO_URI: str = os.getenv("MONGO_URI", "YOUR_MONGO_URI")
     
     # UI Elements
-    WIN_STICKER: str = "CAACAgUAAxkBAAEQwtVpt1_oWxyaQFmiy3O_1knZjN9yCwAC2hIAAikFkVX0qhu40v6REDoE"  
+    WIN_STICKER: str = "CAACAgUAAxkBAAEQ4ftp1R6vy6DodFQ0p_APMn0SMoZcrQACPhQAAgjm4FZbjhxB7h7cIzsE"  
     LOSE_STICKER: str = "" 
     
     # Auto Multiplier Strategy (Martingale Hybrid)
@@ -360,17 +360,17 @@ class EntropyEngine:
             if p_b == 0 or p_s == 0: return float(p_b)
             
             entropy = stats.entropy([p_b, p_s], base=2)
-            # If entropy is extremely high (>0.98), market is chaotic. Default to 0.5
             if entropy > 0.98: return 0.5 
             return float(p_b)
         except: return 0.5
 
 class MetaOptimizer:
-    """ Core 10: Dynamic Weight Adjustment (Self-Learning Hub) """
+    """ Core 10: Dynamic Weight Adjustment (Self-Learning Hub) - 💡 UPDATED """
     def __init__(self):
+        # 💡 ပြင်ဆင်ချက်: Trend နဲ့ Pattern ကို ပိုဦးစားပေးထားသည် (LSTM လိုချည်း Overfit မဖြစ်အောင်)
         self.weights: Dict[str, float] = {
-            'rf': 0.15, 'gb': 0.15, 'markov': 0.10, 'ngram': 0.10,
-            'monte': 0.05, 'trend': 0.10, 'bayes': 0.10, 'lstm': 0.15, 'entropy': 0.10
+            'rf': 0.10, 'gb': 0.10, 'markov': 0.20, 'ngram': 0.15,
+            'monte': 0.05, 'trend': 0.20, 'bayes': 0.05, 'lstm': 0.05, 'entropy': 0.10
         }
 
     def update(self, actual: str, past_preds: Dict[str, float]) -> None:
@@ -381,14 +381,16 @@ class MetaOptimizer:
             
             for model, prob in past_preds.items():
                 error = abs(actual_val - prob)
-                # Reward accuracy, penalize error
+                # 💡 ပြင်ဆင်ချက်: မှန်ရင် အမှတ်တိုးပေးပြီး၊ မှားရင် Weight ကို ချက်ချင်း ထက်ဝက်ချပစ်မည်
                 if error < 0.4: 
-                    self.weights[model] += 0.05
+                    self.weights[model] += 0.08
                 else: 
-                    self.weights[model] = max(0.01, self.weights[model] - 0.02)
+                    self.weights[model] = self.weights[model] * 0.4  # Heavy Penalty (60% လျှော့ချမည်)
+                    self.weights[model] = max(0.001, self.weights[model])
+                
                 total_w += self.weights[model]
                 
-            # Normalize
+            # Normalize Weights
             if total_w > 0:
                 for k in self.weights: 
                     self.weights[k] = float(self.weights[k] / total_w)
@@ -396,7 +398,7 @@ class MetaOptimizer:
             logger.error(f"Meta Optimizer Error: {e}")
 
 # =========================================================================
-# ⚙️ MODULE 5: MASTER ORCHESTRATOR
+# ⚙️ MODULE 5: MASTER ORCHESTRATOR - 💡 UPDATED
 # =========================================================================
 class UltraMasterEngine:
     """ 10-Core System အားလုံးကို တစ်နေရာတည်းမှ ပေါင်းစပ်ထိန်းချုပ်သော အင်ဂျင်ကြီး """
@@ -410,7 +412,6 @@ class UltraMasterEngine:
         self.last_probs: Dict[str, float] = {}
 
     def analyze(self, docs: List[Dict[str, Any]]) -> Tuple[str, float, Dict[str, float]]:
-        """ ဒေတာများကို သရုပ်ခွဲ၍ နောက်ဆုံးခန့်မှန်းချက်ကို ထုတ်ပေးသည် """
         if len(docs) < 50: 
             return random.choice(["BIG", "SMALL"]), random.uniform(50.1, 54.9), {}
         
@@ -419,10 +420,9 @@ class UltraMasterEngine:
             nums = [int(d.get('number', 0)) for d in reversed(docs)]
             pars = [d.get('parity', 'EVEN') for d in reversed(docs)]
             
-            # Market Baseline ရှာခြင်း
-            baseline_b = sizes.count('BIG') / len(sizes)
-            if baseline_b == 0 or baseline_b == 1:
-                baseline_b = 0.5 
+            # Market Baseline & Trend Strength ရှာခြင်း
+            recent_10 = sizes[-10:]
+            baseline_b = recent_10.count('BIG') / len(recent_10)
 
             X, y, curr_X = self.fe.extract_features(sizes, nums, pars)
             
@@ -445,18 +445,25 @@ class UltraMasterEngine:
             w = self.opt.weights
             final_b = sum(probs[k] * w.get(k, 0.1) for k in probs)
             
-            # Baseline ဖြင့် နှိုင်းယှဉ်ခြင်း (BIG ငြိခြင်းကို ကာကွယ်ရန်)
-            if final_b > baseline_b:
-                final_pred = "BIG"
-            elif final_b < baseline_b:
-                final_pred = "SMALL"
+            # 💡 ပြင်ဆင်ချက်: Strong Trend ကို ဆန့်ကျင်ခြင်းမပြုရန် ကာကွယ်မှု (Anti-Opposite Rule)
+            if baseline_b >= 0.8:
+                final_pred = "BIG"  # Follow BIG trend
+                conf = 85.0 + random.uniform(1.0, 5.0)
+            elif baseline_b <= 0.2:
+                final_pred = "SMALL" # Follow SMALL trend
+                conf = 85.0 + random.uniform(1.0, 5.0)
             else:
-                final_pred = random.choice(["BIG", "SMALL"])
-            
-            # Confidence Calculation
-            deviation = abs(final_b - baseline_b)
-            raw_conf = 0.5 + (deviation * 2.5)
-            conf = min(max(float(raw_conf) * 100, 51.0), 99.0)
+                # ပုံမှန်တွက်ချက်မှုအတိုင်း လုပ်မည်
+                if final_b > 0.52:
+                    final_pred = "BIG"
+                elif final_b < 0.48:
+                    final_pred = "SMALL"
+                else:
+                    final_pred = sizes[-1] # မသေချာရင် နောက်ဆုံးထွက်ခဲ့တဲ့အကောင်ကို လိုက်ကပ်မည် (Copycat)
+
+                # Confidence ကို ပိုမိုလက်တွေ့ကျအောင် ပြင်ဆင်ခြင်း
+                deviation = abs(final_b - 0.5)
+                conf = min(max(51.0 + (deviation * 150), 51.0), 98.0)
             
             return final_pred, round(conf, 1), self.last_probs
             
@@ -474,11 +481,11 @@ class UIManager:
 
     async def broadcast_prediction(self, issue: str, pred: str, step: int, conf: float, top_engine: str) -> None:
         msg = (
-            f"<b>[ULTRA-AI 10-CORE PRO]</b>\n"
-            f"⏰ Period: <code>{issue}</code>\n"
-            f"🎯 Prediction: <b>{pred}</b> {step}x\n"
-            f"📊 Confidence: {conf}%\n"
-            f"🧠 Top Engine: <code>{top_engine.upper()}</code>"
+            f"<b>☘️ 𝐔𝐋𝐓𝐑𝐀-𝐀𝐈 10-𝐂𝐎𝐑𝐄 ☘️</b>\n"
+            f"⏰ Pᴇʀɪᴏᴅ: <code>{issue}</code>\n"
+            f"🎯 Cʜᴏɪᴄᴇ: <b>{pred}</b> {step}x\n"
+            f"📊 Cᴏɴғɪᴅᴇɴᴄᴇ: {conf}%\n"
+            f"🌲 Tᴏᴘ Eɴɢɪɴᴇ: <code>{top_engine.upper()}</code>"
         )
         try: 
             await self.bot.send_message(chat_id=Config.CHANNEL_ID, text=msg)
@@ -486,15 +493,15 @@ class UIManager:
             logger.error(f"UI Predict Send Error: {e}")
 
     async def broadcast_result(self, issue: str, pred: str, step: int, is_win: bool, actual_size: str, actual_num: int) -> None:
-        win_str = "WIN ✅" if is_win else "LOSE ❌"
+        win_str = "𝐖𝐈𝐍" if is_win else "𝐋𝐎𝐒𝐄"
         icon = "🟢" if is_win else "🔴"
         res_letter = "B" if actual_size == "BIG" else "S"
         
         msg = (
-            f"<b>🏆 SIX-LOTTERY RESULTS</b>\n\n"
-            f"⏰ Period: <code>{issue}</code>\n"
-            f"🎯 Choice: {pred} {step}x\n"
-            f"📊 Result: {icon} <b>{win_str}</b> | {res_letter} ({actual_num})"
+            f"<b>🏆 𝟐𝟎-𝐂𝐎𝐑𝐄 𝐑𝐄𝐒𝐔𝐋𝐓𝐒</b>\n"
+            f"⏰ Pᴇʀɪᴏᴅ: <code>{issue}</code>\n"
+            #f"🎯 Choice: {pred} {step}x\n"
+            f"📊 Rᴇsᴜʟᴛ: {icon} <b>{win_str}</b> | {res_letter} ({actual_num})"
         )
         try: 
             await self.bot.send_message(chat_id=Config.CHANNEL_ID, text=msg)
@@ -506,7 +513,7 @@ class UIManager:
         except Exception as e: 
             logger.error(f"UI Result Send Error: {e}")
 
-    # 👈 သတိပေး Alert ပို့မည့် Function အသစ်
+    # 👈 သတိပေး Alert ပို့မည့် Function
     async def alert_lose_streak(self, streak: int) -> None:
         """ ၆ ပွဲနှင့်အထက် ဆက်တိုက်ရှုံးပါက Admin သို့ သတိပေးရန် """
         if not Config.ADMIN_ID or Config.ADMIN_ID == "YOUR_ADMIN_ID":
